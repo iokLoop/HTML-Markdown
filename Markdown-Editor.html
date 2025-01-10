@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor Markdown</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .left, .right {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 10px;
+    }
+    .left {
+      border-right: 1px solid #ddd;
+    }
+    .textarea-container, .html-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    textarea {
+      flex: 1;
+      resize: none;
+    }
+    .html-container {
+      position: relative;
+    }
+    .html-container button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+    .preview {
+      flex: 1;
+      border: 1px solid #ddd;
+      padding: 10px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- Lado Izquierdo -->
+  <div class="left">
+    <!-- Div de Entrada Markdown -->
+    <div class="textarea-container">
+      <h2>Escribe tu Markdown</h2>
+      <textarea id="markdown-input" placeholder="Escribe tu Markdown aquí..."></textarea>
+    </div>
+    <!-- Div de HTML en Texto -->
+    <div class="html-container">
+      <h2>HTML Generado</h2>
+      <textarea id="html-output" readonly></textarea>
+      <button onclick="copyHtml()">Copy HTML</button>
+    </div>
+  </div>
+  
+  <!-- Lado Derecho -->
+  <div class="right">
+    <h2>Vista Previa</h2>
+    <div class="preview" id="html-preview"></div>
+  </div>
+
+  <script>
+    const markdownInput = document.getElementById("markdown-input");
+    const htmlOutput = document.getElementById("html-output");
+    const htmlPreview = document.getElementById("html-preview");
+
+    markdownInput.addEventListener("input", () => {
+      const markdownText = markdownInput.value;
+
+      // Llamada para renderizar Markdown en HTML
+      fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `markdown_input=${encodeURIComponent(markdownText)}`
+      })
+      .then(response => response.text())
+      .then(html => {
+        htmlOutput.value = html; // Actualiza el texto HTML
+        htmlPreview.innerHTML = html; // Actualiza la vista previa
+      });
+    });
+
+    function copyHtml() {
+      navigator.clipboard.writeText(htmlOutput.value)
+        .then(() => alert("HTML copiado al portapapeles"))
+        .catch(err => alert("Error al copiar HTML: " + err));
+    }
+  </script>
+</body>
+</html>
