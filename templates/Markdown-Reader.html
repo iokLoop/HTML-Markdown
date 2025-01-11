@@ -19,6 +19,17 @@
       }
     };
   </script>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    window.mermaid = mermaid;
+    // https://mermaid.js.org/config/usage.html
+    // https://mermaid.live
+    mermaid.initialize({ 
+      startOnLoad: true,
+      theme: 'light',
+      securityLevel: 'antiscript'
+    });
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body style="font-family: Arial, sans-serif; padding: 20px;">
@@ -57,29 +68,36 @@
         }
     }
 
-    function updateMarkdownPreview() {
-        var filePath = document.querySelector('input[name="file_path"]').value;
-        
-        console.log('Solicitando actualización de vista previa con la ruta:', filePath); // Debug
+    async function updateMarkdownPreview() {
+      var filePath = document.querySelector('input[name="file_path"]').value;
 
-        // Realiza la solicitud AJAX
-        fetch('/update_preview', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ file_path: filePath })
-        })
-        .then(response => response.text())
-        .then(data => {
-            console.log('Contenido actualizado:', data); // Debug
-            document.getElementById("markdown-preview").innerHTML = data; // Actualiza el contenido del div
-            MathJax.typeset(); // Procesa el contenido matemático nuevamente
-            updateCountdown(); // Reinicia el contador después de actualizar
-        })
-        .catch(error => {
-            console.error('Error al actualizar el contenido:', error);
+      try {
+        const response = await fetch('/update_preview', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ file_path: filePath })
         });
+
+        const data = await response.text();
+        document.getElementById("markdown-preview").innerHTML = data; // Actualiza el contenido del div
+        MathJax.typeset(); // Procesa el contenido matemático nuevamente
+
+        if (window.mermaid) {
+          try {
+            await window.mermaid.run(); // Renderiza los diagramas de Mermaid en el nuevo contenido
+          } catch (error) {
+            console.error('Error al ejecutar mermaid.run():', error);
+          }
+        } else {
+          console.error('Mermaid no está definido');
+        }
+
+        updateCountdown(); // Reinicia el contador después de actualizar
+      } catch (error) {
+        console.error('Error al actualizar el contenido:', error);
+      }
     }
 
     updateCountdown();  // Inicia el contador cuando se carga la página
